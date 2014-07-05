@@ -22,6 +22,7 @@ var commandGenerate = cli.Command{
 	Action: doGenerate,
 	Flags: []cli.Flag{
 		cli.StringFlag{"dsn", "", "Data source name"},
+		cli.StringFlag{"dir", "", "Target directory where the document is generated into"},
 	},
 }
 
@@ -45,7 +46,7 @@ func doGenerate(c *cli.Context) {
 		sql := fmt.Sprintf("SHOW CREATE TABLE `%s`", name)
 		db.QueryRow(sql).Scan(&table, &ddl)
 
-		file, err := os.OpenFile(fmt.Sprintf("%s.sql", name), os.O_CREATE | os.O_WRONLY, 0644)
+		file, err := os.OpenFile(FilePath(c, name), os.O_CREATE | os.O_WRONLY, 0644)
 		DieIfError(err, "Failed to open file")
 
 		defer file.Close()
@@ -63,4 +64,15 @@ func DieIfError(err error, m string) {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
+}
+
+func FilePath(c *cli.Context, table string) string {
+	var dir string
+	if len(c.String("dir")) > 0 {
+		dir = c.String("dir")
+	} else {
+		dir = "."
+	}
+
+	return fmt.Sprintf("%s/%s.sql", dir, table)
 }
