@@ -49,12 +49,12 @@ func doGenerate(c *cli.Context) {
 
 		ddl := NewDDL(ddlString, NewDDLOption(c))
 
-		file, err := os.OpenFile(FilePath(c, name), os.O_CREATE | os.O_WRONLY, 0644)
+		file, err := os.OpenFile(FilePath(c, name), os.O_CREATE | os.O_WRONLY | os.O_TRUNC, 0644)
 		DieIfError(err, "Failed to open file")
 
 		defer file.Close()
 
-		_, err = file.WriteString(ddl.content)
+		_, err = file.WriteString(ddl.GetContent())
 		DieIfError(err, "Failed to write on file")
 	}
 
