@@ -44,7 +44,7 @@ func doGenerate(c *cli.Context) {
 		fmt.Printf("Generated %s from %s\n", document.fileName, ddl.name)
 	})
 
-	fmt.Println("Generated successfully")
+	fmt.Println("Finished successfully")
 }
 
 func GenerateDocumentFiles(c *cli.Context, converter *SQLConverter, f func(*SQLConverter, *DDL)) {
