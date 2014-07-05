@@ -47,14 +47,16 @@ func doGenerate(c *cli.Context) {
 		sql := fmt.Sprintf("SHOW CREATE TABLE `%s`", name)
 		db.QueryRow(sql).Scan(&table, &ddlString)
 
-		ddl := NewDDL(ddlString, NewDDLOption(c))
+		ddl := NewDDL(table, ddlString, NewDDLOption(c))
+		converter := GetConverter(c)
+		document := converter.Convert(ddl)
 
-		file, err := os.OpenFile(FilePath(c, name), os.O_CREATE | os.O_WRONLY | os.O_TRUNC, 0644)
+		file, err := os.OpenFile(FilePath(c, document.fileName), os.O_CREATE | os.O_WRONLY | os.O_TRUNC, 0644)
 		DieIfError(err, "Failed to open file")
 
 		defer file.Close()
 
-		_, err = file.WriteString(ddl.GetContent())
+		_, err = file.WriteString(document.content)
 		DieIfError(err, "Failed to write on file")
 	}
 
@@ -69,7 +71,7 @@ func DieIfError(err error, m string) {
 	}
 }
 
-func FilePath(c *cli.Context, table string) string {
+func FilePath(c *cli.Context, fileName string) string {
 	var dir string
 	if len(c.String("dir")) > 0 {
 		dir = c.String("dir")
@@ -77,11 +79,15 @@ func FilePath(c *cli.Context, table string) string {
 		dir = "."
 	}
 
-	return fmt.Sprintf("%s/%s.sql", dir, table)
+	return fmt.Sprintf("%s/%s", dir, fileName)
 }
 
 func NewDDLOption(c *cli.Context) *DDLOption {
 	return &DDLOption{
 		c.Bool("with-auto-increment"),
 	}
+}
+
+func GetConverter(c *cli.Context) *SQLConverter {
+	return &SQLConverter{}
 }

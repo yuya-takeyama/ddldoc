@@ -5,6 +5,7 @@ import (
 )
 
 type DDL struct {
+	name    string
 	content string
 	option  *DDLOption
 }
@@ -13,8 +14,9 @@ type DDLOption struct {
 	withAutoIncrement bool
 }
 
-func NewDDL(content string, ddlOption *DDLOption) *DDL {
+func NewDDL(name string, content string, ddlOption *DDLOption) *DDL {
 	return &DDL{
+		name,
 		content,
 		ddlOption,
 	}
