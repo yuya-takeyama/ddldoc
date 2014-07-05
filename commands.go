@@ -28,6 +28,26 @@ var commandGenerate = cli.Command{
 }
 
 func doGenerate(c *cli.Context) {
+	converter := GetConverter(c)
+
+	GenerateDocumentFiles(c, converter, func(converter *SQLConverter, ddl *DDL) {
+		document := converter.Convert(ddl)
+
+		file, err := os.OpenFile(FilePath(c, document.fileName), os.O_CREATE | os.O_WRONLY | os.O_TRUNC, 0644)
+		DieIfError(err, "Failed to open file")
+
+		defer file.Close()
+
+		_, err = file.WriteString(document.content)
+		DieIfError(err, "Failed to write on file")
+
+		fmt.Printf("Generated %s from %s\n", document.fileName, ddl.name)
+	})
+
+	fmt.Println("Generated successfully")
+}
+
+func GenerateDocumentFiles(c *cli.Context, converter *SQLConverter, f func(*SQLConverter, *DDL)) {
 	dsn := c.String("dsn")
 	db, err := sql.Open("mysql", dsn)
 	DieIfError(err, "Failed to connect to database")
@@ -48,19 +68,9 @@ func doGenerate(c *cli.Context) {
 		db.QueryRow(sql).Scan(&table, &ddlString)
 
 		ddl := NewDDL(table, ddlString, NewDDLOption(c))
-		converter := GetConverter(c)
-		document := converter.Convert(ddl)
 
-		file, err := os.OpenFile(FilePath(c, document.fileName), os.O_CREATE | os.O_WRONLY | os.O_TRUNC, 0644)
-		DieIfError(err, "Failed to open file")
-
-		defer file.Close()
-
-		_, err = file.WriteString(document.content)
-		DieIfError(err, "Failed to write on file")
+		go f(converter, ddl)
 	}
-
-	fmt.Println("Generated successfully")
 }
 
 func DieIfError(err error, m string) {
