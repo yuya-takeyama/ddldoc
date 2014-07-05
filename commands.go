@@ -23,6 +23,7 @@ var commandGenerate = cli.Command{
 	Flags: []cli.Flag{
 		cli.StringFlag{"dsn", "", "Data source name"},
 		cli.StringFlag{"dir", "", "Target directory where the document is generated into"},
+		cli.BoolFlag{"with-auto-increment", "Whether DDL contains AUTO_INCREMENT count (omitted by default)"},
 	},
 }
 
@@ -42,16 +43,18 @@ func doGenerate(c *cli.Context) {
 		DieIfError(err, "Failed to fetch table name")
 
 		var table string
-		var ddl string
+		var ddlString string
 		sql := fmt.Sprintf("SHOW CREATE TABLE `%s`", name)
-		db.QueryRow(sql).Scan(&table, &ddl)
+		db.QueryRow(sql).Scan(&table, &ddlString)
+
+		ddl := NewDDL(ddlString, NewDDLOption(c))
 
 		file, err := os.OpenFile(FilePath(c, name), os.O_CREATE | os.O_WRONLY, 0644)
 		DieIfError(err, "Failed to open file")
 
 		defer file.Close()
 
-		_, err = file.WriteString(ddl)
+		_, err = file.WriteString(ddl.content)
 		DieIfError(err, "Failed to write on file")
 	}
 
@@ -75,4 +78,10 @@ func FilePath(c *cli.Context, table string) string {
 	}
 
 	return fmt.Sprintf("%s/%s.sql", dir, table)
+}
+
+func NewDDLOption(c *cli.Context) *DDLOption {
+	return &DDLOption{
+		c.Bool("with-auto-increment"),
+	}
 }
