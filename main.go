@@ -14,7 +14,7 @@ func main() {
 
 func newApp() *cli.App {
 	app := cli.NewApp()
-	app.Name = "DDLDoc"
+	app.Name = "ddldoc"
 	app.Usage = "Generates documentation files from DDL"
 	app.Version = Version
 	app.Author = "Yuya Takeyama"

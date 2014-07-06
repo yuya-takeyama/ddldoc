@@ -7,6 +7,9 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/codegangsta/cli"
+
+	"github.com/yuya-takeyama/ddldoc/converters"
+	"github.com/yuya-takeyama/ddldoc/domain"
 )
 
 var Commands = []cli.Command{
@@ -30,24 +33,24 @@ var commandGenerate = cli.Command{
 func doGenerate(c *cli.Context) {
 	converter := GetConverter(c)
 
-	GenerateDocumentFiles(c, converter, func(converter *SQLConverter, ddl *DDL) {
+	GenerateDocumentFiles(c, converter, func(converter converters.Converter, ddl *domain.DDL) {
 		document := converter.Convert(ddl)
 
-		file, err := os.OpenFile(FilePath(c, document.fileName), os.O_CREATE | os.O_WRONLY | os.O_TRUNC, 0644)
+		file, err := os.OpenFile(FilePath(c, document.GetFileName()), os.O_CREATE | os.O_WRONLY | os.O_TRUNC, 0644)
 		DieIfError(err, "Failed to open file")
 
 		defer file.Close()
 
-		_, err = file.WriteString(document.content)
+		_, err = file.WriteString(document.GetContent())
 		DieIfError(err, "Failed to write on file")
 
-		fmt.Printf("Generated %s from %s\n", document.fileName, ddl.name)
+		fmt.Printf("Generated %s from %s\n", document.GetFileName(), ddl.GetTableName())
 	})
 
 	fmt.Println("Finished successfully")
 }
 
-func GenerateDocumentFiles(c *cli.Context, converter *SQLConverter, f func(*SQLConverter, *DDL)) {
+func GenerateDocumentFiles(c *cli.Context, converter converters.Converter, f func(converters.Converter, *domain.DDL)) {
 	dsn := c.String("dsn")
 	db, err := sql.Open("mysql", dsn)
 	DieIfError(err, "Failed to connect to database")
@@ -67,7 +70,7 @@ func GenerateDocumentFiles(c *cli.Context, converter *SQLConverter, f func(*SQLC
 		sql := fmt.Sprintf("SHOW CREATE TABLE `%s`", name)
 		db.QueryRow(sql).Scan(&table, &ddlString)
 
-		ddl := NewDDL(table, ddlString, NewDDLOption(c))
+		ddl := domain.NewDDL(table, ddlString, domain.NewDDLOption(c.Bool("with-auto-increment")))
 
 		go f(converter, ddl)
 	}
@@ -92,12 +95,8 @@ func FilePath(c *cli.Context, fileName string) string {
 	return fmt.Sprintf("%s/%s", dir, fileName)
 }
 
-func NewDDLOption(c *cli.Context) *DDLOption {
-	return &DDLOption{
-		c.Bool("with-auto-increment"),
-	}
-}
+func GetConverter(c *cli.Context) converters.Converter {
+	var converter converters.Converter = &converters.SQLConverter{}
 
-func GetConverter(c *cli.Context) *SQLConverter {
-	return &SQLConverter{}
+	return converter
 }
