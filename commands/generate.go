@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"os"
 
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/codegangsta/cli"
+	_ "github.com/go-sql-driver/mysql"
 
-	"github.com/yuya-takeyama/ddldoc/factories"
 	"github.com/yuya-takeyama/ddldoc/entities"
+	"github.com/yuya-takeyama/ddldoc/factories"
 )
 
 var Generate = cli.Command{

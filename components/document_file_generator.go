@@ -18,17 +18,17 @@ func NewDocumentFileGenerator(targetDirectory string) *DocumentFileGenerator {
 }
 
 func (self *DocumentFileGenerator) Generate(document *entities.Document) error {
-		file, err := os.OpenFile(self.getFilePath(document), os.O_CREATE | os.O_WRONLY | os.O_TRUNC, 0644)
+	file, err := os.OpenFile(self.getFilePath(document), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 
-		if err != nil {
-			return err
-		}
-
-		defer file.Close()
-
-		_, err = file.WriteString(document.GetContent())
-
+	if err != nil {
 		return err
+	}
+
+	defer file.Close()
+
+	_, err = file.WriteString(document.GetContent())
+
+	return err
 
 }
 
