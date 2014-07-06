@@ -4,6 +4,8 @@ import (
 	"os"
 
 	"github.com/codegangsta/cli"
+
+	"github.com/yuya-takeyama/ddldoc/commands"
 )
 
 var Version string = "HEAD"
@@ -19,6 +21,8 @@ func newApp() *cli.App {
 	app.Version = Version
 	app.Author = "Yuya Takeyama"
 	app.Email = "sign.of.the.wolf.pentagram@gmail.com"
-	app.Commands = Commands
+	app.Commands = []cli.Command{
+		commands.Generate,
+	}
 	return app
 }

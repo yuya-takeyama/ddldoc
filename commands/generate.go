@@ -1,4 +1,4 @@
-package main
+package commands
 
 import (
 	"database/sql"
@@ -12,11 +12,7 @@ import (
 	"github.com/yuya-takeyama/ddldoc/entity"
 )
 
-var Commands = []cli.Command{
-	commandGenerate,
-}
-
-var commandGenerate = cli.Command{
+var Generate = cli.Command{
 	Name:  "generate",
 	Usage: "Generates documentation files from DDL",
 	Description: `
@@ -31,18 +27,18 @@ var commandGenerate = cli.Command{
 }
 
 func doGenerate(c *cli.Context) {
-	converter := GetConverter(c)
+	converter := getConverter(c)
 
-	GenerateDocumentFiles(c, converter, func(converter converters.Converter, ddl *entity.DDL) {
+	generateDocumentFiles(c, converter, func(converter converters.Converter, ddl *entity.DDL) {
 		document := converter.Convert(ddl)
 
-		file, err := os.OpenFile(FilePath(c, document.GetFileName()), os.O_CREATE | os.O_WRONLY | os.O_TRUNC, 0644)
-		DieIfError(err, "Failed to open file")
+		file, err := os.OpenFile(getFilePath(c, document.GetFileName()), os.O_CREATE | os.O_WRONLY | os.O_TRUNC, 0644)
+		dieIfError(err, "Failed to open file")
 
 		defer file.Close()
 
 		_, err = file.WriteString(document.GetContent())
-		DieIfError(err, "Failed to write on file")
+		dieIfError(err, "Failed to write on file")
 
 		fmt.Printf("Generated %s from %s\n", document.GetFileName(), ddl.GetTableName())
 	})
@@ -50,20 +46,20 @@ func doGenerate(c *cli.Context) {
 	fmt.Println("Finished successfully")
 }
 
-func GenerateDocumentFiles(c *cli.Context, converter converters.Converter, f func(converters.Converter, *entity.DDL)) {
+func generateDocumentFiles(c *cli.Context, converter converters.Converter, f func(converters.Converter, *entity.DDL)) {
 	dsn := c.String("dsn")
 	db, err := sql.Open("mysql", dsn)
-	DieIfError(err, "Failed to connect to database")
+	dieIfError(err, "Failed to connect to database")
 
 	rows, err := db.Query("SHOW TABLES")
-	DieIfError(err, "Failed to fetch table list")
+	dieIfError(err, "Failed to fetch table list")
 
 	defer rows.Close()
 
 	for rows.Next() {
 		var name string
 		err := rows.Scan(&name)
-		DieIfError(err, "Failed to fetch table name")
+		dieIfError(err, "Failed to fetch table name")
 
 		var table string
 		var ddlString string
@@ -76,7 +72,7 @@ func GenerateDocumentFiles(c *cli.Context, converter converters.Converter, f fun
 	}
 }
 
-func DieIfError(err error, m string) {
+func dieIfError(err error, m string) {
 	if err != nil {
 		fmt.Println(m)
 		fmt.Println(err.Error())
@@ -84,7 +80,7 @@ func DieIfError(err error, m string) {
 	}
 }
 
-func FilePath(c *cli.Context, fileName string) string {
+func getFilePath(c *cli.Context, fileName string) string {
 	var dir string
 	if len(c.String("dir")) > 0 {
 		dir = c.String("dir")
@@ -95,7 +91,7 @@ func FilePath(c *cli.Context, fileName string) string {
 	return fmt.Sprintf("%s/%s", dir, fileName)
 }
 
-func GetConverter(c *cli.Context) converters.Converter {
+func getConverter(c *cli.Context) converters.Converter {
 	var converter converters.Converter = &converters.SQLConverter{}
 
 	return converter
