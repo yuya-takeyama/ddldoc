@@ -1,14 +1,12 @@
 package commands
 
 import (
-	"database/sql"
 	"fmt"
 	"os"
 
 	"github.com/codegangsta/cli"
-	_ "github.com/go-sql-driver/mysql"
 
-	"github.com/yuya-takeyama/ddldoc/entities"
+	"github.com/yuya-takeyama/ddldoc/components"
 	"github.com/yuya-takeyama/ddldoc/factories"
 )
 
@@ -28,14 +26,12 @@ var Generate = cli.Command{
 
 func doGenerate(c *cli.Context) {
 	ddlFactory := factories.NewDDLFactory(factories.NewDDLOptionFactory(c))
+	ddlFetcher := components.NewDDLFetcher(c.String("dsn"))
 	converter := factories.NewConverterFactory(c).Create()
 	documentFileGenerator := factories.NewDocumentFileGeneratorFactory(c).Create()
 
-	dsn := c.String("dsn")
-	db, err := sql.Open("mysql", dsn)
-	dieIfError(err, "Failed to connect to database")
-
-	generateDocumentFiles(db, ddlFactory, func(ddl *entities.DDL) {
+	err := ddlFetcher.Fetch(func(tableName string, ddlContent string) {
+		ddl := ddlFactory.Create(tableName, ddlContent)
 		document := converter.Convert(ddl)
 		err := documentFileGenerator.Generate(document)
 
@@ -44,29 +40,9 @@ func doGenerate(c *cli.Context) {
 		fmt.Printf("Generated %s from %s\n", document.GetFileName(), ddl.GetTableName())
 	})
 
+	dieIfError(err, "Failed to fetch DDL")
+
 	fmt.Println("Finished successfully")
-}
-
-func generateDocumentFiles(db *sql.DB, ddlFactory *factories.DDLFactory, f func(*entities.DDL)) {
-	rows, err := db.Query("SHOW TABLES")
-	dieIfError(err, "Failed to fetch table list")
-
-	defer rows.Close()
-
-	for rows.Next() {
-		var name string
-		err := rows.Scan(&name)
-		dieIfError(err, "Failed to fetch table name")
-
-		var tableName string
-		var ddlContent string
-		sql := fmt.Sprintf("SHOW CREATE TABLE `%s`", name)
-		db.QueryRow(sql).Scan(&tableName, &ddlContent)
-
-		ddl := ddlFactory.Create(tableName, ddlContent)
-
-		go f(ddl)
-	}
 }
 
 func dieIfError(err error, m string) {
