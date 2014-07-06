@@ -28,9 +28,13 @@ var Generate = cli.Command{
 }
 
 func doGenerate(c *cli.Context) {
+	ddlFactory := factories.NewDDLFactory(factories.NewDDLOptionFactory(c))
 	converter := getConverter(c)
+	dsn := c.String("dsn")
+	db, err := sql.Open("mysql", dsn)
+	dieIfError(err, "Failed to connect to database")
 
-	generateDocumentFiles(c, converter, func(converter converters.Converter, ddl *entities.DDL) {
+	generateDocumentFiles(db, ddlFactory, func(ddl *entities.DDL) {
 		document := converter.Convert(ddl)
 
 		file, err := os.OpenFile(getFilePath(c, document.GetFileName()), os.O_CREATE | os.O_WRONLY | os.O_TRUNC, 0644)
@@ -47,12 +51,7 @@ func doGenerate(c *cli.Context) {
 	fmt.Println("Finished successfully")
 }
 
-func generateDocumentFiles(c *cli.Context, converter converters.Converter, f func(converters.Converter, *entities.DDL)) {
-	ddlOptionFactory := factories.NewDDLOptionFactory(c)
-	dsn := c.String("dsn")
-	db, err := sql.Open("mysql", dsn)
-	dieIfError(err, "Failed to connect to database")
-
+func generateDocumentFiles(db *sql.DB, ddlFactory *factories.DDLFactory, f func(*entities.DDL)) {
 	rows, err := db.Query("SHOW TABLES")
 	dieIfError(err, "Failed to fetch table list")
 
@@ -63,14 +62,14 @@ func generateDocumentFiles(c *cli.Context, converter converters.Converter, f fun
 		err := rows.Scan(&name)
 		dieIfError(err, "Failed to fetch table name")
 
-		var table string
-		var ddlString string
+		var tableName string
+		var ddlContent string
 		sql := fmt.Sprintf("SHOW CREATE TABLE `%s`", name)
-		db.QueryRow(sql).Scan(&table, &ddlString)
+		db.QueryRow(sql).Scan(&tableName, &ddlContent)
 
-		ddl := entities.NewDDL(table, ddlString, ddlOptionFactory.Create())
+		ddl := ddlFactory.Create(tableName, ddlContent)
 
-		go f(converter, ddl)
+		go f(ddl)
 	}
 }
 
