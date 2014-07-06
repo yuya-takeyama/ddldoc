@@ -10,10 +10,6 @@ type DDL struct {
 	option  *DDLOption
 }
 
-type DDLOption struct {
-	withAutoIncrement bool
-}
-
 func NewDDL(name string, content string, ddlOption *DDLOption) *DDL {
 	return &DDL{
 		name,
@@ -39,10 +35,4 @@ func (self *DDL) GetContent() string {
 	result += "\n"
 
 	return result
-}
-
-func NewDDLOption(withAutoIncrement bool) *DDLOption {
-	return &DDLOption{
-		withAutoIncrement,
-	}
 }
