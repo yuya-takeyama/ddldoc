@@ -1,4 +1,4 @@
-package main
+package domain
 
 import (
 	"regexp"
@@ -22,6 +22,10 @@ func NewDDL(name string, content string, ddlOption *DDLOption) *DDL {
 	}
 }
 
+func (self *DDL) GetTableName() string {
+	return self.name
+}
+
 func (self *DDL) GetContent() string {
 	var result string
 
@@ -35,4 +39,10 @@ func (self *DDL) GetContent() string {
 	result += "\n"
 
 	return result
+}
+
+func NewDDLOption(withAutoIncrement bool) *DDLOption {
+	return &DDLOption{
+		withAutoIncrement,
+	}
 }
