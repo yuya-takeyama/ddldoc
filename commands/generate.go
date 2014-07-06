@@ -9,7 +9,7 @@ import (
 	"github.com/codegangsta/cli"
 
 	"github.com/yuya-takeyama/ddldoc/converters"
-	"github.com/yuya-takeyama/ddldoc/entity"
+	"github.com/yuya-takeyama/ddldoc/entities"
 )
 
 var Generate = cli.Command{
@@ -29,7 +29,7 @@ var Generate = cli.Command{
 func doGenerate(c *cli.Context) {
 	converter := getConverter(c)
 
-	generateDocumentFiles(c, converter, func(converter converters.Converter, ddl *entity.DDL) {
+	generateDocumentFiles(c, converter, func(converter converters.Converter, ddl *entities.DDL) {
 		document := converter.Convert(ddl)
 
 		file, err := os.OpenFile(getFilePath(c, document.GetFileName()), os.O_CREATE | os.O_WRONLY | os.O_TRUNC, 0644)
@@ -46,7 +46,7 @@ func doGenerate(c *cli.Context) {
 	fmt.Println("Finished successfully")
 }
 
-func generateDocumentFiles(c *cli.Context, converter converters.Converter, f func(converters.Converter, *entity.DDL)) {
+func generateDocumentFiles(c *cli.Context, converter converters.Converter, f func(converters.Converter, *entities.DDL)) {
 	dsn := c.String("dsn")
 	db, err := sql.Open("mysql", dsn)
 	dieIfError(err, "Failed to connect to database")
@@ -66,7 +66,7 @@ func generateDocumentFiles(c *cli.Context, converter converters.Converter, f fun
 		sql := fmt.Sprintf("SHOW CREATE TABLE `%s`", name)
 		db.QueryRow(sql).Scan(&table, &ddlString)
 
-		ddl := entity.NewDDL(table, ddlString, entity.NewDDLOption(c.Bool("with-auto-increment")))
+		ddl := entities.NewDDL(table, ddlString, entities.NewDDLOption(c.Bool("with-auto-increment")))
 
 		go f(converter, ddl)
 	}

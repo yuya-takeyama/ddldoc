@@ -1,4 +1,4 @@
-package entity
+package entities
 
 type Document struct {
 	fileName string
