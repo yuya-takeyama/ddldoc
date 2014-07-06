@@ -8,7 +8,7 @@ import (
 )
 
 type DDLFetcher struct {
-	dsn        string
+	dsn string
 }
 
 func NewDDLFetcher(dsn string) *DDLFetcher {
