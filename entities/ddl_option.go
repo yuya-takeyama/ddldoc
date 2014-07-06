@@ -9,3 +9,7 @@ func NewDDLOption(withAutoIncrement bool) *DDLOption {
 		withAutoIncrement,
 	}
 }
+
+func (option *DDLOption) IsWithAutoIncrement() bool {
+	return option.withAutoIncrement
+}

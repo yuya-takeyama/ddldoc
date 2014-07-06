@@ -25,7 +25,7 @@ func (self *DDL) GetTableName() string {
 func (self *DDL) GetContent() string {
 	var result string
 
-	if self.option.withAutoIncrement == false {
+	if self.option.IsWithAutoIncrement() == false {
 		re := regexp.MustCompile("AUTO_INCREMENT=\\d+ ")
 		result = re.ReplaceAllLiteralString(self.content, "")
 	} else {

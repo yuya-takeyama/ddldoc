@@ -9,6 +9,7 @@ import (
 	"github.com/codegangsta/cli"
 
 	"github.com/yuya-takeyama/ddldoc/converters"
+	"github.com/yuya-takeyama/ddldoc/factories"
 	"github.com/yuya-takeyama/ddldoc/entities"
 )
 
@@ -47,6 +48,7 @@ func doGenerate(c *cli.Context) {
 }
 
 func generateDocumentFiles(c *cli.Context, converter converters.Converter, f func(converters.Converter, *entities.DDL)) {
+	ddlOptionFactory := factories.NewDDLOptionFactory(c)
 	dsn := c.String("dsn")
 	db, err := sql.Open("mysql", dsn)
 	dieIfError(err, "Failed to connect to database")
@@ -66,7 +68,7 @@ func generateDocumentFiles(c *cli.Context, converter converters.Converter, f fun
 		sql := fmt.Sprintf("SHOW CREATE TABLE `%s`", name)
 		db.QueryRow(sql).Scan(&table, &ddlString)
 
-		ddl := entities.NewDDL(table, ddlString, entities.NewDDLOption(c.Bool("with-auto-increment")))
+		ddl := entities.NewDDL(table, ddlString, ddlOptionFactory.Create())
 
 		go f(converter, ddl)
 	}
