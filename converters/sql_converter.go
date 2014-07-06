@@ -1,14 +1,14 @@
 package converters
 
 import (
-	"github.com/yuya-takeyama/ddldoc/domain"
+	"github.com/yuya-takeyama/ddldoc/entity"
 )
 
 type SQLConverter struct {
 }
 
-func (c *SQLConverter) Convert(ddl *domain.DDL) *domain.Document {
+func (c *SQLConverter) Convert(ddl *entity.DDL) *entity.Document {
 	fileName := ddl.GetTableName() + ".sql"
 
-	return domain.NewDocument(fileName, ddl.GetContent())
+	return entity.NewDocument(fileName, ddl.GetContent())
 }

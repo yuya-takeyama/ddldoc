@@ -1,9 +1,9 @@
 package converters
 
 import (
-	"github.com/yuya-takeyama/ddldoc/domain"
+	"github.com/yuya-takeyama/ddldoc/entity"
 )
 
 type Converter interface {
-	Convert(*domain.DDL) *domain.Document
+	Convert(*entity.DDL) *entity.Document
 }
