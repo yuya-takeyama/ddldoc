@@ -30,20 +30,17 @@ var Generate = cli.Command{
 func doGenerate(c *cli.Context) {
 	ddlFactory := factories.NewDDLFactory(factories.NewDDLOptionFactory(c))
 	converter := getConverter(c)
+	documentFileGenerator := factories.NewDocumentFileGeneratorFactory(c).Create()
+
 	dsn := c.String("dsn")
 	db, err := sql.Open("mysql", dsn)
 	dieIfError(err, "Failed to connect to database")
 
 	generateDocumentFiles(db, ddlFactory, func(ddl *entities.DDL) {
 		document := converter.Convert(ddl)
+		err := documentFileGenerator.Generate(document)
 
-		file, err := os.OpenFile(getFilePath(c, document.GetFileName()), os.O_CREATE | os.O_WRONLY | os.O_TRUNC, 0644)
-		dieIfError(err, "Failed to open file")
-
-		defer file.Close()
-
-		_, err = file.WriteString(document.GetContent())
-		dieIfError(err, "Failed to write on file")
+		dieIfError(err, "Failed to generate document file")
 
 		fmt.Printf("Generated %s from %s\n", document.GetFileName(), ddl.GetTableName())
 	})
@@ -79,17 +76,6 @@ func dieIfError(err error, m string) {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
-}
-
-func getFilePath(c *cli.Context, fileName string) string {
-	var dir string
-	if len(c.String("dir")) > 0 {
-		dir = c.String("dir")
-	} else {
-		dir = "."
-	}
-
-	return fmt.Sprintf("%s/%s", dir, fileName)
 }
 
 func getConverter(c *cli.Context) converters.Converter {
