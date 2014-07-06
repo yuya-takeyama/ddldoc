@@ -7,7 +7,11 @@ import (
 type SQLConverter struct {
 }
 
-func (c *SQLConverter) Convert(ddl *entities.DDL) *entities.Document {
+func NewSQLConverter() *SQLConverter {
+	return &SQLConverter{}
+}
+
+func (self *SQLConverter) Convert(ddl *entities.DDL) *entities.Document {
 	fileName := ddl.GetTableName() + ".sql"
 
 	return entities.NewDocument(fileName, ddl.GetContent())

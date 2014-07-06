@@ -8,7 +8,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/codegangsta/cli"
 
-	"github.com/yuya-takeyama/ddldoc/converters"
 	"github.com/yuya-takeyama/ddldoc/factories"
 	"github.com/yuya-takeyama/ddldoc/entities"
 )
@@ -29,7 +28,7 @@ var Generate = cli.Command{
 
 func doGenerate(c *cli.Context) {
 	ddlFactory := factories.NewDDLFactory(factories.NewDDLOptionFactory(c))
-	converter := getConverter(c)
+	converter := factories.NewConverterFactory(c).Create()
 	documentFileGenerator := factories.NewDocumentFileGeneratorFactory(c).Create()
 
 	dsn := c.String("dsn")
@@ -76,10 +75,4 @@ func dieIfError(err error, m string) {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
-}
-
-func getConverter(c *cli.Context) converters.Converter {
-	var converter converters.Converter = &converters.SQLConverter{}
-
-	return converter
 }
